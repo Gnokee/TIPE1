@@ -1,0 +1,96 @@
+  def tableau_de_son(son):
+    timer_total = 0
+    trim_ms = 0
+    seuil_du_silence=-53.0
+    chunk_size=10
+    tableau= []
+
+    while timer_total < len(son):
+        sound = AudioSegment.empty()
+        while son[trim_ms:trim_ms + chunk_size].dBFS > seuil_du_silence :
+            trim_ms += chunk_size
+            timer_total += chunk_size
+            sound = sound + son[trim_ms:trim_ms + chunk_size]
+        if len(sound) > 0 :
+            tableau.append(sound)
+        timer_total += chunk_size
+        trim_ms += chunk_size
+
+    return tableau
+
+s = tableau_de_son(son_original)
+#print(s)
+
+
+
+
+
+def calcul_corr(tab_son):
+
+    for a in range (len(tab_son)):
+        for z in range(len(tab_son)):
+            xr = tab_son[a].get_array_of_samples()
+            yr = tab_son[z].get_array_of_samples()
+
+
+
+            cxymax = -1000
+
+
+            for tau in range(-(len(xr))//1024,(len(xr))//1024):
+                x = xr
+                y = yr
+                if tau > 0 :
+                    x = xr[tau:]
+
+                elif tau < 0:
+                    y = yr[-tau:]
+
+
+                sumx = sum(x)
+                sumy = sum(y)
+
+                ax = sum(x)/len(x)
+                ay = sum(y)/len(y)
+
+                x = [e - ax for e in x]
+                y = [e - ay for e in y]
+
+                varx = 0
+                vary = 0
+                for i in range(len(x)):
+                    varx += x[i]**2
+                for i in range(len(y)):
+                    vary+= y[i]**2
+
+
+                variance_x = varx/(len(x))
+                pow_x = sqrt(variance_x)
+
+                variance_y= vary/(len(x))
+                pow_y = sqrt(variance_y)
+
+
+
+
+                cxy =0
+
+                for i in range(min(len(x),len(y))):
+                    cxy += x[i]*y[i]
+                cxy = cxy / sqrt(varx*vary)
+
+
+
+                if cxy > cxymax:
+                    cxymax = cxy
+
+                #print('.',end='')
+
+            #print(z)
+
+
+
+
+            if cxymax > 0.7 and abs(z -a) < 4 :
+                print("Les corrélation du",a,"élements avec le",z,"ième élement est :",cxymax)
+
