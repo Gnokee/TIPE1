@@ -1,0 +1,91 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+from sklearn.datasets import make_blobs
+from sklearn.metrics import accuracy_score
+
+
+#X,y=make_blobs(n_samples=100, n_features=2,centers=2, random_state=0)
+X = np.array([[0.23,4],[0.12,2],[0.83,17],[0.65,6]])
+y = np.array([0,0,1,1])
+X = np.zeros((100,2))
+y =np.zeros(100)
+
+random.seed(2)
+for i in range(len(X)):
+    if random.choice((True,False)):
+        y[i]=0
+        X[i][0] = random.gauss(0.3,0.2)
+        X[i][1] = random.gauss(1,0.5)
+    else:
+        y[i]=1
+        X[i][0] = random.gauss(0.7,0.5)
+        X[i][1] = random.gauss(3,2)
+
+y=y.reshape((y.shape[0],1))
+print('dimension de x:', X.shape)
+print('dimension de y:',y.shape)
+
+#avec ça, on génère les points jaunes et verts, on fait de "dataset"
+
+
+def initialisation(X):
+    w= np.random.randn(X.shape[1],1)
+    b = np.random.randn(1)
+    return w,b
+
+w,b=initialisation(X)
+
+def model(X,w,b):
+    Z=X.dot(w)+b
+    A=1/(1+np.exp(-Z))
+    return A
+
+A=model(X,w,b)
+
+def log_loss(A,y):
+    return 1 / len(y) * np.sum(-y * np.log(A)-(1-y)*np.log(1-A))
+
+def gradients(A,X,y):
+    dw= 1/len(y)*np.dot(X.T,A-y)
+    db= 1/len(y)*np.sum(A-y)
+    return (dw,db)
+
+dw,db=gradients(A,X,y)
+
+def update(dw,db,w,b,learning_rate):
+    w=w-learning_rate*dw
+    b=b-learning_rate*db
+    return (w,b)
+
+def predict(X,w,b):
+    A=model(X,w,b)
+    return A >= 0.5
+
+def artificial_neuron(X,y,learning_rate=0.1,nbr_iter=100):
+    #initialisation de w et b
+    w,b=initialisation(X)
+    Loss=[]
+    for i in range(nbr_iter):
+        A=model(X,w,b)
+        Loss.append(log_loss(A,y))
+        dw,db=gradients(A,X,y)
+        w,b=update(dw,db,w,b,learning_rate)
+    y_pred=predict(X,w,b)
+    print(accuracy_score(y,y_pred))
+    plt.plot(Loss)
+    plt.show()
+    return w,b
+
+w,b=artificial_neuron(X,y)
+
+new_plant= np.array([0.43,3])
+
+x0 = np.linspace(-1,4,100)
+x1 = (-w[0]*x0 -b)/w[1]
+plt.plot(x0,x1,c='orange')
+plt.scatter(X[:,0],X[:,1],c=y,cmap='summer')
+plt.scatter(new_plant[0], new_plant[1],c='r')
+plt.show()
+print(w,b)
+print(predict(new_plant,w,b))
